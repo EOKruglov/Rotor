@@ -281,7 +281,7 @@ class Params:
             for j in range(len(k)):
                 Bdu[i][j] = integrate.quad(lambda s: np.exp(A[i][j] * s) * Bu[i][j], 0, step)
 
-        Bdw = np.zeros_like(Bu)
+        Bdw = np.zeros_like(Bw)
         for i, k in enumerate(Bdw):
             for j in range(len(k)):
                 Bdw[i][j] = integrate.quad(lambda s: np.exp(A[i][j] * s) * Bw[i][j], 0, step)
@@ -289,3 +289,18 @@ class Params:
         self._set_Ad(Ad)
         self._set_Bdu(Bdu)
         self._set_Bdw((Bdw))
+
+        CL = np.array([
+            [0, 0, 0, 0.5, 0, 1, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0.5, 1, 0, 0, 0, 0, 0, 0],
+            [-0.5, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, -0.5, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        ])
+        DL = np.zeros([4, 4])
+        CR = np.zeros([4, 12])
+        DR = np.eye(4)
+
+        self._set_CL(CL)
+        self._set_DL(DL)
+        self._set_CR(CR)
+        self._set_DR(DR)
