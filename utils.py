@@ -275,8 +275,16 @@ class Params:
         self._set_Bu(Bu)
 
         Ad = np.exp(A * step)
-        Bdu = integrate.quad(lambda s: np.exp(A * s) * Bu, 0, step)
-        Bdw = integrate.quad(lambda s: np.exp(A * s) * Bw, 0, step)
+
+        Bdu = np.zeros_like(Bu)
+        for i, k in enumerate(Bdu):
+            for j in range(len(k)):
+                Bdu[i][j] = integrate.quad(lambda s: np.exp(A[i][j] * s) * Bu[i][j], 0, step)
+
+        Bdw = np.zeros_like(Bu)
+        for i, k in enumerate(Bdw):
+            for j in range(len(k)):
+                Bdw[i][j] = integrate.quad(lambda s: np.exp(A[i][j] * s) * Bw[i][j], 0, step)
 
         self._set_Ad(Ad)
         self._set_Bdu(Bdu)
