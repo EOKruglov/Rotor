@@ -1,3 +1,4 @@
+import cvxpy as cvx
 import math
 import numpy as np
 from scipy import integrate
@@ -20,6 +21,7 @@ class Params:
         _nu1 = None
         _nu2 = None
         _step = None
+        _alpha = None
 
         _A = None
         _Bw = None
@@ -33,6 +35,9 @@ class Params:
         _DL = None
         _CR = None
         _DR = None
+
+        _KC_Continious = None
+        _KC_Discrete = None
 
     def _set_J(self, J):
         self._J = J
@@ -124,6 +129,12 @@ class Params:
     def _get_step(self):
         return self._step
 
+    def _set_alpha(self, alpha):
+        self._alpha = alpha
+
+    def _get_alpha(self):
+        return self._alpha
+
     def _set_A(self, A):
         self._A = A
 
@@ -183,6 +194,18 @@ class Params:
 
     def _get_DR(self):
         return self._DR
+
+    def _set_KC_Continious(self, KC_Continious):
+        self._KC_Continious = KC_Continious
+
+    def _get_KC_Continious(self):
+        return self._KC_Continious
+
+    def _set_KC_Discrete(self, KC_Discrete):
+        self._KC_Discrete = KC_Discrete
+
+    def _get_KC_Discrete(self):
+        return self._KC_Discrete
 
     def initialize_input_variables(self, J, Jz, l0, m, c, s0, omega, eps, nu1, nu2, step):
         self._set_J(J)
@@ -304,3 +327,61 @@ class Params:
         self._set_DL(DL)
         self._set_CR(CR)
         self._set_DR(DR)
+
+
+    def calculate_KC_Continious(self):
+        A = self._get_A()
+        Bw = self._get_Bw()
+        Bu = self._get_Bu()
+        CL = self._get_CL()
+        DL = self._get_DL()
+        CR = self._get_CR()
+        DR = self._get_DR()
+        alpha = self._get_alpha()
+
+        nx = A.shape[0]
+        nu = Bu.shape[1]
+        nzl = CL.shape[0]
+        nzr = CR.shape[0]
+
+        Y = cvx.Variable((nx, nx), symmetric=True)
+        Z = cvx.Variable((nu, nx))
+        gamma = cvx.Variable()
+
+        first_constraint_matrix = Y * np.transpose(A) + A * Y + Bu * Z + np.transpose(Z) * np.transpose(Bu) +\
+                                  Bw * np.transpose(Bw)
+        second_constraint_matrix = np.concatenate([
+            np.concatenate([Y, Y * np.transpose(CL[0:3:2]) + np.transpose(Z) * np.transpose(DL[0:3:2])], axis=1),
+            np.concatenate([CL[0:3:2] * Y + DL[0:3:2] * Z, alpha**2 * gamma * np.eye(2)], axis=1)
+        ], axis=0)
+        third_constraint_matrix = np.concatenate([
+            np.concatenate([Y, Y * np.transpose(CL[1:4:2]) + np.transpose(Z) * np.transpose(DL[1:4:2])], axis=1),
+            np.concatenate([CL[1:4:2] * Y + DL[1:4:2] * Z, alpha**2 * gamma * np.eye(2)], axis=1)
+        ], axis=0)
+
+        fourth_constraint_matrix = np.concatenate([
+            np.concatenate([Y, Y * np.transpose(CR[0]) + np.transpose(Z) * np.transpose(DR[0])], axis=1),
+            np.concatenate([CR[0] * Y + DR[0] * Z, (1 - alpha)**2 * gamma * np.eye(1)], axis=1)
+        ], axis=0)
+        fifth_constraint_matrix = np.concatenate([
+            np.concatenate([Y, Y * np.transpose(CR[1]) + np.transpose(Z) * np.transpose(DR[1])], axis=1),
+            np.concatenate([CR[1] * Y + DR[1] * Z, (1 - alpha)**2 * gamma * np.eye(1)], axis=1)
+        ], axis=0)
+        sixth_constraint_matrix = np.concatenate([
+            np.concatenate([Y, Y * np.transpose(CR[2]) + np.transpose(Z) * np.transpose(DR[2])], axis=1),
+            np.concatenate([CR[2] * Y + DR[2] * Z, (1 - alpha)**2 * gamma * np.eye(1)], axis=1)
+        ], axis=0)
+        seventh_constraint_matrix = np.concatenate([
+            np.concatenate([Y, Y * np.transpose(CR[3]) + np.transpose(Z) * np.transpose(DR[3])], axis=1),
+            np.concatenate([CR[3] * Y + DR[3] * Z, (1 - alpha)**2 * gamma * np.eye(1)], axis=1)
+        ], axis=0)
+        constraints = [first_constraint_matrix < 0, second_constraint_matrix > 0, third_constraint_matrix > 0,
+                       fourth_constraint_matrix > 0, fifth_constraint_matrix > 0, sixth_constraint_matrix > 0,
+                       seventh_constraint_matrix > 0, Y > 0, gamma > 0]
+
+        obj = cvx.Minimize(gamma)
+        problem = cvx.Problem(obj, constraints)
+        opt_val = problem.solve()
+        KC_Continious = Z / Y
+
+        self._set_KC_Continious(KC_Continious)
