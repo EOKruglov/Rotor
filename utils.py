@@ -39,6 +39,8 @@ class Params:
         _KC_Continious = None
         _KC_Discrete = None
 
+        _B2 = None
+
     def _set_J(self, J):
         self._J = J
 
@@ -207,6 +209,12 @@ class Params:
     def _get_KC_Discrete(self):
         return self._KC_Discrete
 
+    def _set_B2(self, B2):
+        self._B2 = B2
+
+    def _get_B2(self):
+        return self._B2
+
     def initialize_input_variables(self, J, Jz, l0, m, c, s0, omega, eps, nu1, nu2, step):
         self._set_J(J)
         self._set_Jz(Jz)
@@ -293,6 +301,7 @@ class Params:
         Bw = np.concatenate([np.zeros([6, 6]), np.linalg.inv(A0) * B1], axis=0)
         Bu = np.concatenate([np.zeros([6, 4]), np.linalg.inv(A0) * B2], axis=0)
 
+        self._set_B2(B2)
         self._set_A(A)
         self._set_Bw(Bw)
         self._set_Bu(Bu)
@@ -381,7 +390,70 @@ class Params:
 
         obj = cvx.Minimize(gamma)
         problem = cvx.Problem(obj, constraints)
-        opt_val = problem.solve()
-        KC_Continious = Z / Y
+        opt_val = problem.solve(solver='SeDuMi')
+        KC_Continious = Z * np.linalg.inv(Y)
 
         self._set_KC_Continious(KC_Continious)
+
+    def calculate_KC_Discrete(self):
+        A = self._get_A()
+        B2 = self._get_B2()
+        Ad = self._get_Ad()
+        Bdw = self._get_Bdw()
+        Bdu = self._get_Bdu()
+        CL = self._get_CL()
+        DL = self._get_DL()
+        CR = self._get_CR()
+        DR = self._get_DR()
+        alpha = self._get_alpha()
+
+        nx = A.shape[0]
+        nu = B2.shape[1]
+        nzl = CL.shape[0]
+        nzr = CR.shape[0]
+
+        Y = cvx.Variable((nx, nx), symmetric=True)
+        Z = cvx.Variable((nu, nx))
+        gamma = cvx.Variable()
+
+        first_constraint_matrix = np.concatenate([
+            np.concatenate([Y, Y * np.transpose(Ad) + np.transpose(Z) * np.transpose(Bdu), np.zeros([12, 6])], axis=1),
+            np.concatenate([Ad * Y + Bdu * Z, Y, Bdw], axis=1),
+            np.concatenate([np.zeros([6, 12]), np.transpose(Bdw), np.eye(6)], axis=1)
+        ], axis=0)
+        second_constraint_matrix = np.concatenate([
+            np.concatenate([Y, Y * np.transpose(CL[0:3:2]) + np.transpose(Z) * np.transpose(DL[0:3:2])], axis=1),
+            np.concatenate([CL[0:3:2] * Y + DL[0:3:2] * Z, alpha ** 2 * gamma * np.eye(2)], axis=1)
+        ], axis=0)
+        third_constraint_matrix = np.concatenate([
+            np.concatenate([Y, Y * np.transpose(CL[1:4:2]) + np.transpose(Z) * np.transpose(DL[1:4:2])], axis=1),
+            np.concatenate([CL[1:4:2] * Y + DL[1:4:2] * Z, alpha ** 2 * gamma * np.eye(2)], axis=1)
+        ], axis=0)
+
+        fourth_constraint_matrix = np.concatenate([
+            np.concatenate([Y, Y * np.transpose(CR[0]) + np.transpose(Z) * np.transpose(DR[0])], axis=1),
+            np.concatenate([CR[0] * Y + DR[0] * Z, (1 - alpha) ** 2 * gamma * np.eye(1)], axis=1)
+        ], axis=0)
+        fifth_constraint_matrix = np.concatenate([
+            np.concatenate([Y, Y * np.transpose(CR[1]) + np.transpose(Z) * np.transpose(DR[1])], axis=1),
+            np.concatenate([CR[1] * Y + DR[1] * Z, (1 - alpha) ** 2 * gamma * np.eye(1)], axis=1)
+        ], axis=0)
+        sixth_constraint_matrix = np.concatenate([
+            np.concatenate([Y, Y * np.transpose(CR[2]) + np.transpose(Z) * np.transpose(DR[2])], axis=1),
+            np.concatenate([CR[2] * Y + DR[2] * Z, (1 - alpha) ** 2 * gamma * np.eye(1)], axis=1)
+        ], axis=0)
+        seventh_constraint_matrix = np.concatenate([
+            np.concatenate([Y, Y * np.transpose(CR[3]) + np.transpose(Z) * np.transpose(DR[3])], axis=1),
+            np.concatenate([CR[3] * Y + DR[3] * Z, (1 - alpha) ** 2 * gamma * np.eye(1)], axis=1)
+        ], axis=0)
+
+        constraints = [first_constraint_matrix > 0, second_constraint_matrix > 0, third_constraint_matrix > 0,
+                       fourth_constraint_matrix > 0, fifth_constraint_matrix > 0, sixth_constraint_matrix > 0,
+                       seventh_constraint_matrix > 0, Y > 0, gamma > 0]
+
+        obj = cvx.Minimize(gamma)
+        problem = cvx.Problem(obj, constraints)
+        opt_val = problem.solve(solver='SeDuMi')
+        KC_Discrete = Z * np.linalg.inv(Y)
+
+        self._set_KC_Discrete(KC_Discrete)
