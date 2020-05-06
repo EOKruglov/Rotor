@@ -3,43 +3,46 @@ import math
 import numpy as np
 from scipy import integrate
 
+
 class Params:
 
+    _J = None
+    _Jz = None
+    _l0 = None
+    _m = None
+    _c = None
+    _s0 = None
+    _omega = None
+    _T = None
+    _rho0 = None
+    _mu0 = None
+    _lambda = None
+    _eps = None
+    _nu1 = None
+    _nu2 = None
+    _step = None
+    _alpha = None
+
+    _A = None
+    _Bw = None
+    _Bu = None
+
+    _Ad = None
+    _Bdu = None
+    _Bdw = None
+
+    _CL = None
+    _DL = None
+    _CR = None
+    _DR = None
+
+    _KC_Continious = None
+    _KC_Discrete = None
+
+    _B2 = None
+
     def __init__(self):
-        _J = None
-        _Jz = None
-        _l0 = None
-        _m = None
-        _c = None
-        _s0 = None
-        _omega = None
-        _T = None
-        _rho0 = None
-        _mu0 = None
-        _lambda = None
-        _eps = None
-        _nu1 = None
-        _nu2 = None
-        _step = None
-        _alpha = None
-
-        _A = None
-        _Bw = None
-        _Bu = None
-
-        _Ad = None
-        _Bdu = None
-        _Bdw = None
-
-        _CL = None
-        _DL = None
-        _CR = None
-        _DR = None
-
-        _KC_Continious = None
-        _KC_Discrete = None
-
-        _B2 = None
+        pass
 
     def _set_J(self, J):
         self._J = J
@@ -140,19 +143,19 @@ class Params:
     def _set_A(self, A):
         self._A = A
 
-    def _get_A(self):
+    def get_A(self):
         return self._A
 
     def _set_Bw(self, Bw):
         self._Bw = Bw
 
-    def _get_Bw(self):
+    def get_Bw(self):
         return self._Bw
 
     def _set_Bu(self, Bu):
         self._Bu = Bu
 
-    def _get_Bu(self):
+    def get_Bu(self):
         return self._Bu
 
     def _set_Ad(self, Ad):
@@ -176,7 +179,7 @@ class Params:
     def _set_CL(self, CL):
         self._CL = CL
 
-    def _get_CL(self):
+    def get_CL(self):
         return self._CL
 
     def _set_DL(self, DL):
@@ -206,7 +209,7 @@ class Params:
     def _set_KC_Discrete(self, KC_Discrete):
         self._KC_Discrete = KC_Discrete
 
-    def _get_KC_Discrete(self):
+    def get_KC_Discrete(self):
         return self._KC_Discrete
 
     def _set_B2(self, B2):
