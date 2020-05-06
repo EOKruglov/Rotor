@@ -51,7 +51,7 @@ class Solution:
             [np.sin(rho0 * t)],
             [np.sin(rho0 * t)],
             [np.sin(rho0 * t)],
-            [np.sin(rho0 * t)0]
+            [np.sin(rho0 * t)]
         ])
 
     def influence_dumped(self, t):
