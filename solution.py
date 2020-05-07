@@ -1,6 +1,6 @@
 import numpy as np
 
-from scipy.integrate import odeint
+from scipy.integrate import ode, odeint
 from utils import Params
 
 
@@ -13,9 +13,9 @@ class Solution:
     _period = None
 
     def __init__(self, start_time, end_time, period):
-        _start_time = start_time
-        _end_time = end_time
-        _period = period
+        self._start_time = start_time
+        self._end_time = end_time
+        self._period = period
 
     def _get_start_time(self):
         return self._start_time
@@ -77,26 +77,27 @@ class Solution:
         z1 = np.zeros([2, count])
         z2 = np.zeros([4, count])
 
-        z2[:, 0] = KC_Discrete * x0
-        coord = CL * x0
+        z2[:, 0: 1] = KC_Discrete @ x0
+        coord = CL @ x0
 
-        z1[:, 0] = np.array([
-            [np.linalg.norm(coord[0:3:2])],
-            [np.linalg.norm(coord[1:4:2])]
+        z1[:, 0:1] = np.array([
+            [np.linalg.norm(coord[0:3:2], ord=np.inf)],
+            [np.linalg.norm(coord[1:4:2], ord=np.inf)]
         ])
+
+        def vdp1(y, t):
+            return A @ y + Bw @ self.influence_dumped(t) + Bu @ KC_Discrete @ x0.reshape([12, 1])
 
         for k in range(count - 1):
-            xg = odeint(A * xg + Bw * self.influence_dumped(t[k]) + Bu * KC_Discrete * x0, x0,
-                        np.arange(t[k], t[k + 1], self._get_period()))
+            y = odeint(vdp1, x0.reshape([12]), [t[k + 1]])
+            x0 = np.transpose(y)
 
-            x0 = np.transpose(xg[-1, :])
-
-            z2[:, k + 1] = KC_Discrete * x0
-            coord = CL * x0
-            z1[:, k + 1] = np.array([
-            [np.linalg.norm(coord[0:3:2])],
-            [np.linalg.norm(coord[1:4:2])]
-        ])
+            z2[:, k + 1:k + 2] = KC_Discrete @ x0
+            coord = CL @ x0
+            z1[:, k + 1:k + 2] = np.array([
+                [np.linalg.norm(coord[0:3:2], ord=np.inf)],
+                [np.linalg.norm(coord[1:4:2], ord=np.inf)]
+            ])
 
         self._set_z1(z1)
         self._set_z2(z2)
