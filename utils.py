@@ -341,64 +341,6 @@ class Params:
         self._set_CR(CR)
         self._set_DR(DR)
 
-
-    # def calculate_KC_Continious(self):
-    #     A = self.get_A()
-    #     Bw = self.get_Bw()
-    #     Bu = self.get_Bu()
-    #     CL = self.get_CL()
-    #     DL = self._get_DL()
-    #     CR = self._get_CR()
-    #     DR = self._get_DR()
-    #     alpha = self._get_alpha()
-    #
-    #     nx = A.shape[0]
-    #     nu = Bu.shape[1]
-    #     nzl = CL.shape[0]
-    #     nzr = CR.shape[0]
-    #
-    #     Y = cvx.Variable((nx, nx), symmetric=True)
-    #     Z = cvx.Variable((nu, nx))
-    #     gamma = cvx.Variable()
-    #
-    #     first_constraint_matrix = np.dot(Y, np.transpose(A)) + np.dot(A, Y) + np.dot(Bu, Z) + np.dot(np.transpose(Z), np.transpose(Bu)) +\
-    #                               np.dot(Bw, np.transpose(Bw))
-    #     second_constraint_matrix = np.concatenate([
-    #         np.concatenate([Y, np.dot(Y, np.transpose(CL[0:3:2])) + np.dot(np.transpose(Z), np.transpose(DL[0:3:2]))], axis=1),
-    #         np.concatenate([np.dot(CL[0:3:2], Y) + np.dot(DL[0:3:2], Z), alpha**2 * gamma * np.eye(2)], axis=1)
-    #     ], axis=0)
-    #     third_constraint_matrix = np.concatenate([
-    #         np.concatenate([Y, np.dot(Y, np.transpose(CL[1:4:2])) + np.dot(np.transpose(Z), np.transpose(DL[1:4:2]))], axis=1),
-    #         np.concatenate([np.dot(CL[1:4:2], Y) + np.dot(DL[1:4:2], Z), alpha**2 * gamma * np.eye(2)], axis=1)
-    #     ], axis=0)
-    #
-    #     fourth_constraint_matrix = np.concatenate([
-    #         np.concatenate([Y, np.dot(Y, np.transpose(CR[0])) + np.dot(np.transpose(Z), np.transpose(DR[0]))], axis=1),
-    #         np.concatenate([np.dot(CR[0], Y) + np.dot(DR[0], Z), (1 - alpha)**2 * gamma * np.eye(1)], axis=1)
-    #     ], axis=0)
-    #     fifth_constraint_matrix = np.concatenate([
-    #         np.concatenate([Y, np.dot(Y, np.transpose(CR[1])) + np.dot(np.transpose(Z), np.transpose(DR[1]))], axis=1),
-    #         np.concatenate([np.dot(CR[1], Y) + np.dot(DR[1], Z), (1 - alpha)**2 * gamma * np.eye(1)], axis=1)
-    #     ], axis=0)
-    #     sixth_constraint_matrix = np.concatenate([
-    #         np.concatenate([Y, np.dot(Y, np.transpose(CR[2])) + np.dot(np.transpose(Z), np.transpose(DR[2]))], axis=1),
-    #         np.concatenate([np.dot(CR[2], Y) + np.dot(DR[2], Z), (1 - alpha)**2 * gamma * np.eye(1)], axis=1)
-    #     ], axis=0)
-    #     seventh_constraint_matrix = np.concatenate([
-    #         np.concatenate([Y, np.dot(Y, np.transpose(CR[3])) + np.dot(np.transpose(Z), np.transpose(DR[3]))], axis=1),
-    #         np.concatenate([np.dot(CR[3], Y) + np.dot(DR[3], Z), (1 - alpha)**2 * gamma * np.eye(1)], axis=1)
-    #     ], axis=0)
-    #     constraints = [first_constraint_matrix < 0, second_constraint_matrix > 0, third_constraint_matrix > 0,
-    #                    fourth_constraint_matrix > 0, fifth_constraint_matrix > 0, sixth_constraint_matrix > 0,
-    #                    seventh_constraint_matrix > 0, Y > 0, gamma > 0]
-    #
-    #     obj = cvx.Minimize(gamma)
-    #     problem = cvx.Problem(obj, constraints)
-    #     opt_val = problem.solve(solver='SeDuMi')
-    #     KC_Continious = Z * np.linalg.inv(Y)
-    #
-    #     self._set_KC_Continious(KC_Continious)
-
     def calculate_KC_Discrete(self):
         A = self.get_A()
         B2 = self._get_B2()

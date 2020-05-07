@@ -1,6 +1,6 @@
 import numpy as np
 
-from scipy.integrate import ode, odeint
+from scipy.integrate import odeint
 from utils import Params
 
 
@@ -70,10 +70,10 @@ class Solution:
         A = params.get_A()
         Bw = params.get_Bw()
         Bu = params.get_Bu()
-        t = np.arange(self._get_start_time(), self._get_end_time() + self._get_period(), self._get_period())
+        time = np.arange(self._get_start_time(), self._get_end_time() + self._get_period(), self._get_period())
         x0 = np.zeros([12, 1])
         CL = params.get_CL()
-        count = t.size
+        count = time.size
         z1 = np.zeros([2, count])
         z2 = np.zeros([4, count])
 
@@ -85,12 +85,16 @@ class Solution:
             [np.linalg.norm(coord[1:4:2], ord=np.inf)]
         ])
 
-        def vdp1(y, t):
-            return A @ y + Bw @ self.influence_dumped(t) + Bu @ KC_Discrete @ x0.reshape([12, 1])
-
         for k in range(count - 1):
-            y = odeint(vdp1, x0.reshape([12]), [t[k + 1]])
-            x0 = np.transpose(y)
+
+            def vdp1(y, t, _A, _Bwi, _BwKCx0):
+                dydt = A @ y + _Bwi.reshape([12]) + _BwKCx0.reshape([12])
+                return [dydt[0], dydt[1], dydt[2], dydt[3], dydt[4], dydt[5], dydt[6], dydt[7], dydt[8], dydt[9],
+                        dydt[10], dydt[11]]
+
+            y = odeint(vdp1, x0.reshape([12]), [time[k], time[k + 1]], args=(A, Bw @ self.influence_dumped(time[k]),
+                                                                             Bu @ KC_Discrete @ x0.reshape([12,1])))
+            x0 = np.transpose(y[1:2])
 
             z2[:, k + 1:k + 2] = KC_Discrete @ x0
             coord = CL @ x0
