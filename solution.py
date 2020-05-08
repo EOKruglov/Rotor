@@ -81,8 +81,8 @@ class Solution:
         coord = CL @ x0
 
         z1[:, 0:1] = np.array([
-            [np.linalg.norm(coord[0:3:2], ord=np.inf)],
-            [np.linalg.norm(coord[1:4:2], ord=np.inf)]
+            [np.linalg.norm(coord[0:3:2], ord=-np.inf)],
+            [np.linalg.norm(coord[1:4:2], ord=-np.inf)]
         ])
 
         for k in range(count - 1):
@@ -93,14 +93,14 @@ class Solution:
                         dydt[10], dydt[11]]
 
             y = odeint(vdp1, x0.reshape([12]), [time[k], time[k + 1]], args=(A, Bw @ self.influence_dumped(time[k]),
-                                                                             Bu @ KC_Discrete @ x0.reshape([12,1])))
+                                                                             Bu @ KC_Discrete @ x0.reshape([12, 1])))
             x0 = np.transpose(y[1:2])
 
             z2[:, k + 1:k + 2] = KC_Discrete @ x0
             coord = CL @ x0
             z1[:, k + 1:k + 2] = np.array([
-                [np.linalg.norm(coord[0:3:2], ord=np.inf)],
-                [np.linalg.norm(coord[1:4:2], ord=np.inf)]
+                [np.linalg.norm(coord[0:3:2], ord=-np.inf)],
+                [np.linalg.norm(coord[1:4:2], ord=-np.inf)]
             ])
 
         self._set_z1(z1)

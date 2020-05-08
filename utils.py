@@ -300,10 +300,10 @@ class Params:
 
         A = np.concatenate([
             np.concatenate([np.zeros([6, 6]), np.eye(6)], axis=1),
-            np.concatenate([np.dot(np.linalg.inv(A0), A2), np.dot(np.linalg.inv(A0),  A1)], axis=1)
+            np.concatenate([np.linalg.inv(A0) @ A2, np.linalg.inv(A0) @ A1], axis=1)
         ], axis=0)
-        Bw = np.concatenate([np.zeros([6, 6]), np.dot(np.linalg.inv(A0), B1)], axis=0)
-        Bu = np.concatenate([np.zeros([6, 4]), np.dot(np.linalg.inv(A0), B2)], axis=0)
+        Bw = np.concatenate([np.zeros([6, 6]), np.linalg.inv(A0) @ B1], axis=0)
+        Bu = np.concatenate([np.zeros([6, 4]), np.linalg.inv(A0) @ B2], axis=0)
 
         self._set_B2(B2)
         self._set_A(A)
@@ -312,16 +312,16 @@ class Params:
 
         Ad = np.exp(A * step)
 
-        Bdu = np.zeros_like(Bu)
-        for i, k in enumerate(Bdu):
+        Bdu = np.zeros_like(A)
+        for i, k in enumerate(A):
             for j in range(len(k)):
-                Bdu[i][j] = np.float(integrate.quad(lambda s: np.exp(A[i][j] * s) * Bu[i][j], 0, step)[0])
-
-        Bdw = np.zeros_like(Bw)
-        for i, k in enumerate(Bdw):
+                Bdu[i][j] = np.float(integrate.quad(lambda s: np.exp(A[i][j] * s), 0, step)[0])
+        Bdu = Bdu @ Bu
+        Bdw = np.zeros_like(A)
+        for i, k in enumerate(A):
             for j in range(len(k)):
-                Bdw[i][j] = np.float(integrate.quad(lambda s: np.exp(A[i][j] * s) * Bw[i][j], 0, step)[0])
-
+                Bdw[i][j] = np.float(integrate.quad(lambda s: np.exp(A[i][j] * s), 0, step)[0])
+        Bdw = Bdw @ Bw
         self._set_Ad(Ad)
         self._set_Bdu(Bdu)
         self._set_Bdw((Bdw))
@@ -394,19 +394,18 @@ class Params:
 
         point = np.finfo(float).eps
 
-        constraints = [cvx.lambda_min(first_constraint_matrix) >= point,
-                       cvx.lambda_min(second_constraint_matrix) >= point,
-                       cvx.lambda_min(third_constraint_matrix) >= point,
-                       cvx.lambda_min(fourth_constraint_matrix) >= point,
-                       cvx.lambda_min(fifth_constraint_matrix) >= point,
-                       cvx.lambda_min(sixth_constraint_matrix) >= point,
-                       cvx.lambda_min(seventh_constraint_matrix) >= point,
-                       cvx.lambda_min(Y) >= point,
+        constraints = [first_constraint_matrix >> point,
+                       second_constraint_matrix >> point,
+                       third_constraint_matrix >> point,
+                       fourth_constraint_matrix >> point,
+                       fifth_constraint_matrix >> point,
+                       sixth_constraint_matrix >> point,
+                       seventh_constraint_matrix >> point,
+                       Y >> point,
                        gamma >= point]
 
         obj = cvx.Minimize(gamma)
         problem = cvx.Problem(obj, constraints)
-        opt_val = problem.solve(verbose=True)
+        opt_val = problem.solve(verbose=True, solver='SCS')
         KC_Discrete = Z.value @ np.linalg.inv(Y.value)
-
         self._set_KC_Discrete(KC_Discrete)
