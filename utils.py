@@ -1,7 +1,10 @@
 import cvxpy as cvx
 import math
 import numpy as np
+import scipy
+import sympy
 from scipy import integrate
+from sympy import Matrix, symbols
 
 
 class Params:
@@ -244,13 +247,13 @@ class Params:
         T = math.sqrt(m * s0)
         self._set_T(T)
 
-        rho0 = (Jz * T * omega)/(J + m * l0 ** 2)
+        rho0 = (Jz * T * omega)/(J + m * (l0 ** 2))
         self._set_rho0(rho0)
 
-        mu0 = (4 * m * l0 ** 2) / (J + m * l0 ** 2)
+        mu0 = (4 * m * (l0 ** 2)) / (J + m * (l0 ** 2))
         self._set_mu0(mu0)
 
-        lambda0 = (c * T ** 2) / (J + m * l0 ** 2)
+        lambda0 = (c * (T ** 2)) / (J + m * (l0 ** 2))
         self._set_lambda(lambda0)
 
     def initialize_matrices(self):
@@ -310,21 +313,13 @@ class Params:
         self._set_Bw(Bw)
         self._set_Bu(Bu)
 
-        Ad = np.exp(A * step)
+        Ad = np.eye(12) + step * A
+        Bdw = step * Bw
+        Bdu = step * Bu
 
-        Bdu = np.zeros_like(A)
-        for i, k in enumerate(A):
-            for j in range(len(k)):
-                Bdu[i][j] = np.float(integrate.quad(lambda s: np.exp(A[i][j] * s), 0, step)[0])
-        Bdu = Bdu @ Bu
-        Bdw = np.zeros_like(A)
-        for i, k in enumerate(A):
-            for j in range(len(k)):
-                Bdw[i][j] = np.float(integrate.quad(lambda s: np.exp(A[i][j] * s), 0, step)[0])
-        Bdw = Bdw @ Bw
         self._set_Ad(Ad)
         self._set_Bdu(Bdu)
-        self._set_Bdw((Bdw))
+        self._set_Bdw(Bdw)
 
         CL = np.array([
             [0, 0, 0, 0.5, 0, 1, 0, 0, 0, 0, 0, 0],
@@ -365,44 +360,42 @@ class Params:
         first_constraint_matrix = cvx.bmat([
             [Y, Y @ Ad.T + Z.T @ Bdu.T, np.zeros([12, 6])],
             [Ad @ Y + Bdu @ Z, Y, Bdw],
-            [np.zeros([6, 12]), np.transpose(Bdw), np.eye(6)]
+            [np.zeros([6, 12]), Bdw.T, np.eye(6)]
         ])
         second_constraint_matrix = cvx.bmat([
-            [Y, Y @ np.transpose(CL[0:3:2]) + Z.T @ np.transpose(DL[0:3:2])],
+            [Y, Y @ CL[0:3:2].T + Z.T @ DL[0:3:2].T],
             [CL[0:3:2] @ Y + DL[0:3:2] @ Z, alpha ** 2 * gamma * np.eye(2)]
         ])
         third_constraint_matrix = cvx.bmat([
-            [Y, Y @ np.transpose(CL[1:4:2]) + Z.T @ np.transpose(DL[1:4:2])],
+            [Y, Y @ CL[1:4:2].T + Z.T @ DL[1:4:2].T],
             [CL[1:4:2] @ Y + DL[1:4:2] @ Z, alpha ** 2 * gamma * np.eye(2)]
         ])
         fourth_constraint_matrix = cvx.bmat([
-            [Y, Y @ np.transpose(CR[0:1]) + Z.T @ np.transpose(DR[0:1])],
+            [Y, Y @ CR[0:1].T + Z.T @ DR[0:1].T],
             [CR[0:1] @ Y + DR[0:1] @ Z, (1 - alpha) ** 2 * gamma * np.eye(1)]
         ])
         fifth_constraint_matrix = cvx.bmat([
-            [Y, Y @ np.transpose(CR[1:2]) + Z.T @ np.transpose(DR[1:2])],
+            [Y, Y @ CR[1:2].T + Z.T @ DR[1:2].T],
             [CR[1:2] @ Y + DR[1:2] @ Z, (1 - alpha) ** 2 * gamma * np.eye(1)]
         ])
         sixth_constraint_matrix = cvx.bmat([
-            [Y, Y @ np.transpose(CR[2:3]) + Z.T @ np.transpose(DR[2:3])],
+            [Y, Y @ CR[2:3].T + Z.T @ DR[2:3].T],
             [CR[2:3] @ Y + DR[2:3] @ Z, (1 - alpha) ** 2 * gamma * np.eye(1)]
         ])
         seventh_constraint_matrix = cvx.bmat([
-            [Y, Y @ np.transpose(CR[3:4]) + Z.T @ np.transpose(DR[3:4])],
+            [Y, Y @ CR[3:4].T + Z.T @ DR[3:4].T],
             [CR[3:4] @ Y + DR[3:4] @ Z, (1 - alpha) ** 2 * gamma * np.eye(1)]
         ])
 
-        point = np.finfo(float).eps
-
-        constraints = [first_constraint_matrix >> point,
-                       second_constraint_matrix >> point,
-                       third_constraint_matrix >> point,
-                       fourth_constraint_matrix >> point,
-                       fifth_constraint_matrix >> point,
-                       sixth_constraint_matrix >> point,
-                       seventh_constraint_matrix >> point,
-                       Y >> point,
-                       gamma >= point]
+        constraints = [first_constraint_matrix >> 0,
+                       second_constraint_matrix >> 0,
+                       third_constraint_matrix >> 0,
+                       fourth_constraint_matrix >> 0,
+                       fifth_constraint_matrix >> 0,
+                       sixth_constraint_matrix >> 0,
+                       seventh_constraint_matrix >> 0,
+                       Y >> 0,
+                       gamma >= 0]
 
         obj = cvx.Minimize(gamma)
         problem = cvx.Problem(obj, constraints)
