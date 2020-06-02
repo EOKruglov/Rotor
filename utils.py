@@ -98,7 +98,7 @@ class Params:
     def _set_rho0(self, rho0):
         self._rho0 = rho0
 
-    def _get_rho0(self):
+    def get_rho0(self):
         return self._rho0
 
     def _set_mu0(self, mu0):
@@ -164,19 +164,19 @@ class Params:
     def _set_Ad(self, Ad):
         self._Ad = Ad
 
-    def _get_Ad(self):
+    def get_Ad(self):
         return self._Ad
 
     def _set_Bdu(self, Bdu):
         self._Bdu = Bdu
 
-    def _get_Bdu(self):
+    def get_Bdu(self):
         return self._Bdu
 
     def _set_Bdw(self, Bdw):
         self._Bdw = Bdw
 
-    def _get_Bdw(self):
+    def get_Bdw(self):
         return self._Bdw
 
     def _set_CL(self, CL):
@@ -206,7 +206,7 @@ class Params:
     def _set_KC_Continious(self, KC_Continious):
         self._KC_Continious = KC_Continious
 
-    def _get_KC_Continious(self):
+    def get_KC_Continious(self):
         return self._KC_Continious
 
     def _set_KC_Discrete(self, KC_Discrete):
@@ -259,7 +259,7 @@ class Params:
     def initialize_matrices(self):
         mu0 = self._get_mu0()
         eps = self._get_eps()
-        rho0 = self._get_rho0()
+        rho0 = self.get_rho0()
         lambda0 = self._get_lambda()
         step = self._get_step()
 
@@ -339,9 +339,9 @@ class Params:
     def calculate_KC_Discrete(self):
         A = self.get_A()
         B2 = self._get_B2()
-        Ad = self._get_Ad()
-        Bdw = self._get_Bdw()
-        Bdu = self._get_Bdu()
+        Ad = self.get_Ad()
+        Bdw = self.get_Bdw()
+        Bdu = self.get_Bdu()
         CL = self.get_CL()
         DL = self._get_DL()
         CR = self._get_CR()
@@ -402,3 +402,67 @@ class Params:
         opt_val = problem.solve(verbose=True, solver='SCS')
         KC_Discrete = Z.value @ np.linalg.inv(Y.value)
         self._set_KC_Discrete(KC_Discrete)
+
+
+    def caclucate_KC_Continious(self):
+        A = self.get_A()
+        Bw = self.get_Bw()
+        Bu = self.get_Bu()
+        CL = self.get_CL()
+        DL = self._get_DL()
+        CR = self._get_CR()
+        DR = self._get_DR()
+        alpha = self._get_alpha()
+
+        nx = A.shape[0]
+        nu = Bu.shape[1]
+        nzl = CL.shape[0]
+        nzr = CR.shape[0]
+
+        Y = cvx.Variable((nx, nx), symmetric=True)
+        Z = cvx.Variable((nu, nx))
+        gamma = cvx.Variable()
+
+        first_constraint_matrix = cvx.bmat([
+            [Y @ A.T + A @ Y + Bu @ Z + Z.T @ Bu.T + Bw @ Bw.T]
+        ])
+        second_constraint_matrix = cvx.bmat([
+            [Y, Y @ CL[0:3:2].T + Z.T @ DL[0:3:2].T],
+            [CL[0:3:2] @ Y + DL[0:3:2] @ Z, alpha ** 2 * gamma * np.eye(2)]
+        ])
+        third_constraint_matrix = cvx.bmat([
+            [Y, Y @ CL[1:4:2].T + Z.T @ DL[1:4:2].T],
+            [CL[1:4:2] @ Y + DL[1:4:2] @ Z, alpha ** 2 * gamma * np.eye(2)]
+        ])
+        fourth_constraint_matrix = cvx.bmat([
+            [Y, Y @ CR[0:1].T + Z.T @ DR[0:1].T],
+            [CR[0:1] @ Y + DR[0:1] @ Z, (1 - alpha) ** 2 * gamma * np.eye(1)]
+        ])
+        fifth_constraint_matrix = cvx.bmat([
+            [Y, Y @ CR[1:2].T + Z.T @ DR[1:2].T],
+            [CR[1:2] @ Y + DR[1:2] @ Z, (1 - alpha) ** 2 * gamma * np.eye(1)]
+        ])
+        sixth_constraint_matrix = cvx.bmat([
+            [Y, Y @ CR[2:3].T + Z.T @ DR[2:3].T],
+            [CR[2:3] @ Y + DR[2:3] @ Z, (1 - alpha) ** 2 * gamma * np.eye(1)]
+        ])
+        seventh_constraint_matrix = cvx.bmat([
+            [Y, Y @ CR[3:4].T + Z.T @ DR[3:4].T],
+            [CR[3:4] @ Y + DR[3:4] @ Z, (1 - alpha) ** 2 * gamma * np.eye(1)]
+        ])
+
+        constraints = [first_constraint_matrix << 0,
+                       second_constraint_matrix >> 0,
+                       third_constraint_matrix >> 0,
+                       fourth_constraint_matrix >> 0,
+                       fifth_constraint_matrix >> 0,
+                       sixth_constraint_matrix >> 0,
+                       seventh_constraint_matrix >> 0,
+                       Y >> 0,
+                       gamma >= 0]
+
+        obj = cvx.Minimize(gamma)
+        problem = cvx.Problem(obj, constraints)
+        opt_val = problem.solve(verbose=True, solver='SCS')
+        KC_Continous = Z.value @ np.linalg.inv(Y.value)
+        self._set_KC_Continious(KC_Continous)
