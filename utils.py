@@ -262,6 +262,7 @@ class Params:
         rho0 = self.get_rho0()
         lambda0 = self._get_lambda()
         step = self._get_step()
+        omega = self._get_omega()
 
         A0 = np.array([
             [1, 0, -mu0, 0, 0, 0],
@@ -282,11 +283,11 @@ class Params:
         ])
 
         A2 = np.array([
-            [-lambda0, lambda0, 0, 0, 0, 0],
-            [lambda0, -lambda0, 0, 0, 0, 0],
+            [-lambda0, lambda0, 0, -eps*omega, eps*omega, 0],
+            [lambda0, -lambda0, 0, eps*omega, -eps*omega, 0],
             [0, 0, 0, 0, 0, 0],
-            [0, 0, 0, -lambda0, lambda0, 0],
-            [0, 0, 0, lambda0, -lambda0, 0],
+            [eps*omega, -eps*omega, 0, -lambda0, lambda0, 0],
+            [-eps*omega, eps*omega, 0, lambda0, -lambda0, 0],
             [0, 0, 0, 0, 0, 0]
         ])
 
@@ -364,27 +365,27 @@ class Params:
         ])
         second_constraint_matrix = cvx.bmat([
             [Y, Y @ CL[0:3:2].T + Z.T @ DL[0:3:2].T],
-            [CL[0:3:2] @ Y + DL[0:3:2] @ Z, alpha ** 2 * gamma * np.eye(2)]
+            [CL[0:3:2] @ Y + DL[0:3:2] @ Z, ((alpha ** 2) * gamma) * np.eye(2)]
         ])
         third_constraint_matrix = cvx.bmat([
             [Y, Y @ CL[1:4:2].T + Z.T @ DL[1:4:2].T],
-            [CL[1:4:2] @ Y + DL[1:4:2] @ Z, alpha ** 2 * gamma * np.eye(2)]
+            [CL[1:4:2] @ Y + DL[1:4:2] @ Z, ((alpha ** 2) * gamma) * np.eye(2)]
         ])
         fourth_constraint_matrix = cvx.bmat([
             [Y, Y @ CR[0:1].T + Z.T @ DR[0:1].T],
-            [CR[0:1] @ Y + DR[0:1] @ Z, (1 - alpha) ** 2 * gamma * np.eye(1)]
+            [CR[0:1] @ Y + DR[0:1] @ Z, (((1 - alpha) ** 2) * gamma) * np.eye(1)]
         ])
         fifth_constraint_matrix = cvx.bmat([
             [Y, Y @ CR[1:2].T + Z.T @ DR[1:2].T],
-            [CR[1:2] @ Y + DR[1:2] @ Z, (1 - alpha) ** 2 * gamma * np.eye(1)]
+            [CR[1:2] @ Y + DR[1:2] @ Z, (((1 - alpha) ** 2) * gamma) * np.eye(1)]
         ])
         sixth_constraint_matrix = cvx.bmat([
             [Y, Y @ CR[2:3].T + Z.T @ DR[2:3].T],
-            [CR[2:3] @ Y + DR[2:3] @ Z, (1 - alpha) ** 2 * gamma * np.eye(1)]
+            [CR[2:3] @ Y + DR[2:3] @ Z, (((1 - alpha) ** 2) * gamma) * np.eye(1)]
         ])
         seventh_constraint_matrix = cvx.bmat([
             [Y, Y @ CR[3:4].T + Z.T @ DR[3:4].T],
-            [CR[3:4] @ Y + DR[3:4] @ Z, (1 - alpha) ** 2 * gamma * np.eye(1)]
+            [CR[3:4] @ Y + DR[3:4] @ Z, (((1 - alpha) ** 2) * gamma) * np.eye(1)]
         ])
 
         constraints = [first_constraint_matrix >> 0,
