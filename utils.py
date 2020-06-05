@@ -425,7 +425,8 @@ class Params:
         gamma = cvx.Variable()
 
         first_constraint_matrix = cvx.bmat([
-            [Y @ A.T + A @ Y + Bu @ Z + Z.T @ Bu.T + Bw @ Bw.T]
+            [Y @ A.T + A @ Y + Bu @ Z + Z.T @ Bu.T, Bw],
+            [Bw.T, -np.eye(6)]
         ])
         second_constraint_matrix = cvx.bmat([
             [Y, Y @ CL[0:3:2].T + Z.T @ DL[0:3:2].T],
