@@ -151,19 +151,23 @@ class Solution:
             [np.linalg.norm(coord[1:4:2])]
         ])
 
+        def vdp3(y, t, Ac, Bw):
+            dydt = Ac @ y + (Bw @ self.influence_dumped(t)).reshape([12])
+            return [dydt[0], dydt[1], dydt[2], dydt[3], dydt[4], dydt[5], dydt[6], dydt[7], dydt[8], dydt[9],
+                                    dydt[10], dydt[11]]
+
+        def vdp4(y, t, Ac, Bw, _rho0):
+            dydt = Ac @ y + (Bw @ self.influence_harmonic(t, _rho0)).reshape([12])
+            return [dydt[0], dydt[1], dydt[2], dydt[3], dydt[4], dydt[5], dydt[6], dydt[7], dydt[8], dydt[9],
+                    dydt[10], dydt[11]]
+
+        if is_harmonic:
+            y = odeint(vdp4, x0.reshape([12]), time, args=(A + Bu @ KC_Continious, Bw, rho0))
+        else:
+            y = odeint(vdp3, x0.reshape([12]), time, args=(A + Bu @ KC_Continious, Bw))
+
         for k in range(count - 1):
-
-            def vdp2(y, t, Ac, _Bw):
-                dydt = Ac @ y + _Bw.reshape([12])
-                return [dydt[0], dydt[1], dydt[2], dydt[3], dydt[4], dydt[5], dydt[6], dydt[7], dydt[8], dydt[9],
-                        dydt[10], dydt[11]]
-
-            if is_harmonic:
-                y = odeint(vdp2, x0.reshape([12]), [time[k], time[k + 1]], args=(A + Bu @ KC_Continious, Bw @ self.influence_harmonic(time[k + 1], rho0)))
-            else:
-                y = odeint(vdp2, x0.reshape([12]), [time[k], time[k + 1]], args=(A + Bu @ KC_Continious, Bw @ self.influence_dumped(time[k + 1])))
-
-            x0_ = np.transpose(y[1:2])
+            x0_ = np.transpose(y[k+1:k+2])
             z2_cont[:, k + 1:k + 2] = KC_Continious @ x0_
             coord = CL @ x0_
             z1_cont[:, k + 1:k + 2] = np.array([
