@@ -188,19 +188,19 @@ class Params:
     def _set_DL(self, DL):
         self._DL = DL
 
-    def _get_DL(self):
+    def get_DL(self):
         return self._DL
 
     def _set_CR(self, CR):
         self._CR = CR
 
-    def _get_CR(self):
+    def get_CR(self):
         return self._CR
 
     def _set_DR(self, DR):
         self._DR = DR
 
-    def _get_DR(self):
+    def get_DR(self):
         return self._DR
 
     def _set_KC_Continious(self, KC_Continious):
@@ -344,9 +344,9 @@ class Params:
         Bdw = self.get_Bdw()
         Bdu = self.get_Bdu()
         CL = self.get_CL()
-        DL = self._get_DL()
-        CR = self._get_CR()
-        DR = self._get_DR()
+        DL = self.get_DL()
+        CR = self.get_CR()
+        DR = self.get_DR()
         alpha = self._get_alpha()
 
         nx = A.shape[0]
@@ -410,9 +410,9 @@ class Params:
         Bw = self.get_Bw()
         Bu = self.get_Bu()
         CL = self.get_CL()
-        DL = self._get_DL()
-        CR = self._get_CR()
-        DR = self._get_DR()
+        DL = self.get_DL()
+        CR = self.get_CR()
+        DR = self.get_DR()
         alpha = self._get_alpha()
 
         nx = A.shape[0]
