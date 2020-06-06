@@ -9,6 +9,7 @@ class Solution:
     _z1 = None
     _z2 = None
     _z1_continious = None
+    _z1_cont_not_norm = None
     _z2_continious = None
     _z1_discrete = None
     _z2_discrete = None
@@ -41,6 +42,12 @@ class Solution:
 
     def get_z1(self):
         return self._z1
+
+    def _set_z1_cont_not_norm(self, z1_not_norm):
+        self._z1_cont_not_norm = z1_not_norm
+
+    def get_z1_cont_not_norm(self):
+        return self._z1_cont_not_norm
 
     def _set_z2(self, z2):
         self._z2 = z2
@@ -143,9 +150,11 @@ class Solution:
         KC_Continious = params.get_KC_Continious()
         z1_cont = np.zeros([2, count])
         z2_cont = np.zeros([4, count])
+        z1_cont_not_norm = np.zeros([4, count])
 
         z2_cont[:, 0:1] = KC_Continious @ x0
         coord = CL @ x0
+        z1_cont_not_norm[:, 0:1] = coord
         z1_cont[:, 0:1] = np.array([
             [np.linalg.norm(coord[0:3:2])],
             [np.linalg.norm(coord[1:4:2])]
@@ -174,9 +183,11 @@ class Solution:
                 [np.linalg.norm(coord[0:3:2])],
                 [np.linalg.norm(coord[1:4:2])]
             ])
+            z1_cont_not_norm[:, k+1:k+2] = coord
 
         self._set_z1_continious(z1_cont)
         self._set_z2_continious(z2_cont)
+        self._set_z1_cont_not_norm(z1_cont_not_norm)
 
         x0 = np.zeros([12, 1])
         z1_disc = np.zeros([2, count])

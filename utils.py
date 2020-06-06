@@ -221,7 +221,7 @@ class Params:
     def _get_B2(self):
         return self._B2
 
-    def initialize_input_variables(self, J, Jz, l0, m, c, s0, omega, eps, nu1, nu2, step, alpha):
+    def initialize_input_variables(self, J, Jz, l0, m, c, s0, omega, eps, step, alpha):
         self._set_J(J)
         self._set_Jz(Jz)
         self._set_l0(l0)
@@ -230,8 +230,6 @@ class Params:
         self._set_s0(s0)
         self._set_omega(omega)
         self._set_eps(eps)
-        self._set_nu1(nu1)
-        self._set_nu2(nu2)
         self._set_step(step)
         self._set_alpha(alpha)
 
@@ -263,6 +261,7 @@ class Params:
         lambda0 = self._get_lambda()
         step = self._get_step()
         omega = self._get_omega()
+        l0= self._get_l0()
 
         A0 = np.array([
             [1, 0, -mu0, 0, 0, 0],
@@ -323,10 +322,10 @@ class Params:
         self._set_Bdw(Bdw)
 
         CL = np.array([
-            [0, 0, 0, 0.5, 0, 1, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0.5, 1, 0, 0, 0, 0, 0, 0],
-            [-0.5, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, -0.5, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            [0, 0, 0, 2*l0, 0, 1, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, -2*l0, 1, 0, 0, 0, 0, 0, 0],
+            [-2*l0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 2*l0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         ])
         DL = np.zeros([4, 4])
         CR = np.zeros([4, 12])
