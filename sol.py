@@ -14,10 +14,10 @@ class Solution:
     __exp_param = None
     __param = None
 
-    def __init__(self, end_time, params: Params, exp_param=-0.01, param=1):
+    def __init__(self, end_time, params: Params):
         self.__end_time = end_time
-        self.__exp_param = exp_param
-        self.__param = param
+        self.__exp_param = -0.01
+        self.__param = params.get_rho0()
         self.__KC_Continuous = params.calculate_KC_Continuous()
         self.__KC_Discrete = params.calculate_KC_Discrete()
 
@@ -35,10 +35,10 @@ class Solution:
         return 0.1 * np.exp(self.__exp_param * t) * np.array([
             [0],
             [0],
-            [np.sin(self.__param * t)],
+            [np.sin(t)],
             [0],
             [0],
-            [np.cos(self.__param * t)]
+            [np.cos(t)]
         ])
 
     def get_continuous_solution(self, params: Params, is_harmonic: bool):
@@ -92,7 +92,7 @@ class Solution:
     def get_discrete_solution(self, params: Params, is_harmonic: bool):
         x0 = np.zeros([12, 1])
         step = params.get_step()
-        time = np.arange(self.__start_time, self.__end_time + self.__continuous_period, self.__continuous_period)
+        time = np.arange(self.__start_time, self.__end_time + step, step)
         count = time.size
         z1_disc = np.zeros([2, count])
         z2_disc = np.zeros([4, count])

@@ -29,6 +29,7 @@ class Params:
     __DR = None
 
     __B2 = None
+    __rho0 = None
 
     def __init__(self, J, Jz, l0, m, c, s0, omega, eps, step, alpha):
         self.__J = J
@@ -45,6 +46,7 @@ class Params:
         T = np.sqrt(m * s0)
         mu0 = (4 * m * (l0 ** 2)) / (J + m * (l0 ** 2))
         rho0 = (Jz * T * omega) / (J + m * (l0 ** 2))
+        self.__rho0 = rho0
         lambda0 = (c * (T ** 2)) / (J + m * (l0 ** 2))
 
         A0 = np.array([
@@ -144,6 +146,9 @@ class Params:
 
     def get_step(self):
         return self.__step
+
+    def get_rho0(self):
+        return self.__rho0
 
     def calculate_KC_Continuous(self):
         nx = self.__A.shape[0]
