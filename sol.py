@@ -125,6 +125,8 @@ class Solution:
         z1 = np.zeros([2, count])
         z2 = np.zeros([4, count])
         z1_not_norm = np.zeros([4, count])
+        _x = np.zeros([count])
+        _y = np.zeros([count])
         x0 = np.zeros([12, 1])
 
         A = params.get_A()
@@ -134,7 +136,8 @@ class Solution:
 
         z2[:, 0: 1] = self.__KC_Discrete @ x0
         coord = CL @ x0
-
+        _x[0] = x0[5]
+        _y[0] = x0[2]
         z1[:, 0:1] = np.array([
              [np.linalg.norm(coord[0:3:2])],
              [np.linalg.norm(coord[1:4:2])]
@@ -157,7 +160,8 @@ class Solution:
                            Bu @ self.__KC_Discrete @ x0.reshape([12, 1])))
 
             x0 = np.transpose(y[1:2])
-
+            _x[k + 1] = x0[5]
+            _y[k + 1] = x0[2]
             z2[:, k + 1:k + 2] = self.__KC_Discrete @ x0
             coord = CL @ x0
             z1[:, k + 1:k + 2] = np.array([
@@ -166,7 +170,7 @@ class Solution:
             ])
             z1_not_norm[:, k + 1:k + 2] = coord
 
-        return z1, z2, z1_not_norm
+        return z1, z2, z1_not_norm, _x, _y
 
 
 

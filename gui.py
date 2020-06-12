@@ -286,7 +286,7 @@ class Ui_MainWindow(object):
         solution = Solution(end_time=end_time, params=params)
         z1_cont, z2_cont, z1_cont_not_norm = solution.get_continuous_solution(params=params, is_harmonic=is_harmonic)
         z1_disc, z2_disc, z1_disc_not_norm = solution.get_discrete_solution(params=params, is_harmonic=is_harmonic)
-        z1, z2, z1_not_norm = solution.get_solution(params=params, is_harmonic=is_harmonic)
+        z1, z2, z1_not_norm, x, y = solution.get_solution(params=params, is_harmonic=is_harmonic)
 
         self.max_u.setText(str(z1[0].max()))
         self.Max_l.setText(str(z1[1].max()))
@@ -367,5 +367,12 @@ class Ui_MainWindow(object):
         plt.title('Смещения в нижних подшипниках')
         plt.xlabel('x_l')
         plt.ylabel('y_l')
+        plt.grid()
+
+        plt.figure(num='Смещения шарнира')
+        plt.plot(x, y)
+        plt.title('Смещения шарнира')
+        plt.xlabel('x')
+        plt.ylabel('y')
         plt.grid()
         plt.show()
