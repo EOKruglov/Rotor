@@ -48,6 +48,8 @@ class Solution:
         z1_cont = np.zeros([2, count])
         z2_cont = np.zeros([4, count])
         z1_cont_not_norm = np.zeros([4, count])
+        _x_cont = np.zeros([count])
+        _y_cont = np.zeros([count])
 
         A = params.get_A()
         Bu = params.get_Bu()
@@ -61,6 +63,9 @@ class Solution:
             [np.linalg.norm(coord[0:3:2])],
             [np.linalg.norm(coord[1:4:2])]
         ])
+
+        _x_cont[0] = x0[5]
+        _y_cont[0] = x0[2]
 
         def vdp1(y, t, Ac, Bw):
             dydt = Ac @ y + (Bw @ self.influence_dumped(t)).reshape([12])
@@ -86,8 +91,10 @@ class Solution:
                 [np.linalg.norm(coord[1:4:2])]
             ])
             z1_cont_not_norm[:, k+1:k+2] = coord
+            _x_cont[k + 1] = x0_[5]
+            _y_cont[k + 1] = x0_[2]
 
-        return z1_cont, z2_cont, z1_cont_not_norm
+        return z1_cont, z2_cont, z1_cont_not_norm, _x_cont, _y_cont
 
     def get_discrete_solution(self, params: Params, is_harmonic: bool):
         x0 = np.zeros([12, 1])
