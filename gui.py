@@ -355,15 +355,16 @@ class Ui_MainWindow(object):
         plt.ylabel('u_4')
         plt.grid()
 
-        plt.figure(num='Смещения')
-        plt.subplot(1, 2, 1),
+        plt.figure(num='Смещения в верхних подшипниках')
         plt.plot(z1_cont_not_norm[0], z1_not_norm[2], color='blue')
         plt.plot(z1_not_norm[0], z1_not_norm[2], color='black')
         plt.title('Смещения в верхних подшипниках')
+        plt.legend(['Continuous', 'Solution'])
         plt.xlabel('x_u')
         plt.ylabel('y_u')
         plt.grid()
-        plt.subplot(1, 2, 2)
+
+        plt.figure(num='Смещения в нижних подшипниках')
         plt.plot(z1_cont_not_norm[1], z1_cont_not_norm[3], color='blue')
         plt.plot(z1_not_norm[1], z1_not_norm[3], color='black')
         plt.legend(['Continuous', 'Solution'])
